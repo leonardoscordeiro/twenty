@@ -37,6 +37,7 @@ export type CentralCompany = ObjectRecord & {
   produto: string | null;
   mensalidade: CentralCurrency;
   inicioContrato: string | null;
+  fimContrato?: string | null;
   cnpj: string | null;
   repositorio: CentralLinks;
   stack: string | null;

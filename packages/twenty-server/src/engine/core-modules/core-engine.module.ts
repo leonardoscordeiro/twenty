@@ -44,6 +44,7 @@ import { GeoMapModule } from 'src/engine/core-modules/geo-map/geo-map-module';
 import { GettingStartedWorkflowModule } from 'src/engine/core-modules/getting-started/getting-started-workflow.module';
 import { GettingStartedModule } from 'src/engine/core-modules/getting-started/getting-started.module';
 import { HealthModule } from 'src/engine/core-modules/health/health.module';
+import { CentralMonitorModule } from 'src/engine/core-modules/central-monitor/central-monitor.module';
 import { I18nModule } from 'src/engine/core-modules/i18n/i18n.module';
 import { ImapSmtpCaldavModule } from 'src/engine/core-modules/imap-smtp-caldav-connection/imap-smtp-caldav-connection.module';
 import { ImpersonationModule } from 'src/engine/core-modules/impersonation/impersonation.module';
@@ -91,6 +92,7 @@ import { FileApiModule } from './file/file-api.module';
     EnvironmentModule,
     TwentyConfigModule.forRoot(),
     HealthModule,
+    CentralMonitorModule,
     AuthModule,
     BillingModule,
     BillingWebhookModule,

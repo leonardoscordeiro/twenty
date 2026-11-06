@@ -17,6 +17,7 @@ const COMPANY_SCALAR_GQL_FIELDS: RecordGqlFields = {
   produto: true,
   mensalidade: true,
   inicioContrato: true,
+  fimContrato: true,
   cnpj: true,
   repositorio: true,
   stack: true,
