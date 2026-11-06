@@ -3,6 +3,7 @@ import { AppPath } from 'twenty-shared/types';
 import { getAppPath } from 'twenty-shared/utils';
 
 import { LazyRoute } from '@/app/components/LazyRoute';
+import { CENTRAL_PATHS } from '@/central/constants/CentralPaths';
 import { NavigatePreservingSearchAndHash } from '@/app/routing/components/NavigatePreservingSearchAndHash';
 import {
   createSettingsRouteObjects,
@@ -75,6 +76,24 @@ const AiChatInboxPage = lazy(() =>
 const MobileHomePage = lazy(() =>
   import('~/pages/mobile-home/MobileHomePage').then((module) => ({
     default: module.MobileHomePage,
+  })),
+);
+
+const CentralClientsPage = lazy(() =>
+  import('~/pages/central/CentralClientsPage').then((module) => ({
+    default: module.CentralClientsPage,
+  })),
+);
+
+const CentralClientPage = lazy(() =>
+  import('~/pages/central/CentralClientPage').then((module) => ({
+    default: module.CentralClientPage,
+  })),
+);
+
+const CentralInfraPage = lazy(() =>
+  import('~/pages/central/CentralInfraPage').then((module) => ({
+    default: module.CentralInfraPage,
   })),
 );
 
@@ -212,6 +231,30 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <MobileHomePage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.clients,
+      element: (
+        <LazyRoute>
+          <CentralClientsPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.infra,
+      element: (
+        <LazyRoute>
+          <CentralInfraPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.client,
+      element: (
+        <LazyRoute>
+          <CentralClientPage />
         </LazyRoute>
       ),
     },
