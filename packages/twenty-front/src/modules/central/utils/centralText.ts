@@ -52,3 +52,6 @@ export const getSupabaseRef = (texts: (string | null | undefined)[]) =>
     .filter(isNonEmptyString)
     .map((text) => SUPABASE_REF_REGEX.exec(text)?.[1])
     .find(isNonEmptyString);
+
+export const getCentralPersonPath = (personId: string) =>
+  `/pessoas/${personId}`;

@@ -3,6 +3,7 @@ import { AppPath } from 'twenty-shared/types';
 import { getAppPath } from 'twenty-shared/utils';
 
 import { LazyRoute } from '@/app/components/LazyRoute';
+import { CENTRAL_DIRECTORY_PATHS } from '@/central/constants/CentralDirectoryPaths';
 import { CENTRAL_PATHS } from '@/central/constants/CentralPaths';
 import { NavigatePreservingSearchAndHash } from '@/app/routing/components/NavigatePreservingSearchAndHash';
 import {
@@ -100,6 +101,24 @@ const CentralInfraPage = lazy(() =>
 const CentralOpportunitiesPage = lazy(() =>
   import('~/pages/central/CentralOpportunitiesPage').then((module) => ({
     default: module.CentralOpportunitiesPage,
+  })),
+);
+
+const CentralCompaniesPage = lazy(() =>
+  import('~/pages/central/CentralCompaniesPage').then((module) => ({
+    default: module.CentralCompaniesPage,
+  })),
+);
+
+const CentralPeoplePage = lazy(() =>
+  import('~/pages/central/CentralPeoplePage').then((module) => ({
+    default: module.CentralPeoplePage,
+  })),
+);
+
+const CentralPersonPage = lazy(() =>
+  import('~/pages/central/CentralPersonPage').then((module) => ({
+    default: module.CentralPersonPage,
   })),
 );
 
@@ -269,6 +288,30 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <CentralClientPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_DIRECTORY_PATHS.companies,
+      element: (
+        <LazyRoute>
+          <CentralCompaniesPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_DIRECTORY_PATHS.people,
+      element: (
+        <LazyRoute>
+          <CentralPeoplePage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_DIRECTORY_PATHS.person,
+      element: (
+        <LazyRoute>
+          <CentralPersonPage />
         </LazyRoute>
       ),
     },

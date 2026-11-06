@@ -1,3 +1,4 @@
+import { useCentralPersonRoleField } from '@/central/hooks/useCentralPersonRoleField';
 import {
   type CentralRelationTarget,
   toCentralCompanies,
@@ -26,7 +27,13 @@ const COMPANY_SCALAR_GQL_FIELDS: RecordGqlFields = {
 // Keyed by target object: the generated query silently drops field names
 // missing from metadata, so relation names are resolved at runtime.
 const RELATION_GQL_FIELDS_BY_TARGET = {
-  person: { id: true, name: true, jobTitle: true, emails: true },
+  person: {
+    id: true,
+    name: true,
+    jobTitle: true,
+    emails: true,
+    phones: true,
+  },
   custoInfra: {
     id: true,
     name: true,
@@ -84,6 +91,8 @@ export const useCentralCompanies = () => {
     fieldName: getOneToManyFieldName(objectMetadataItem, target),
   }));
 
+  const { roleField } = useCentralPersonRoleField();
+
   const recordGqlFields: RecordGqlFields = {
     ...COMPANY_SCALAR_GQL_FIELDS,
     ...Object.fromEntries(
@@ -91,7 +100,9 @@ export const useCentralCompanies = () => {
         .filter(({ fieldName }) => isDefined(fieldName))
         .map(({ target, fieldName }) => [
           fieldName,
-          RELATION_GQL_FIELDS_BY_TARGET[target],
+          target === 'person' && isDefined(roleField)
+            ? { ...RELATION_GQL_FIELDS_BY_TARGET.person, papel: true }
+            : RELATION_GQL_FIELDS_BY_TARGET[target],
         ]),
     ),
   };
@@ -121,8 +132,12 @@ export const useCentralCompanies = () => {
   ) =>
     getSelectOption(custoInfraMetadataItem, fieldName, value)?.label ?? value;
 
+  const getProdutoLabel = (value: string | null) =>
+    getSelectOption(objectMetadataItem, 'produto', value)?.label ?? value;
+
   return {
     companies,
+    getProdutoLabel,
     loading,
     statusOptions,
     getStatusOption,

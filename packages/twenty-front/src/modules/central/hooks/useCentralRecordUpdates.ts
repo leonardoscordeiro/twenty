@@ -89,5 +89,8 @@ export const useCentralRecordUpdates = () => {
     );
   };
 
-  return { saveAmount, markAcessoReviewed };
+  const savePersonRole = (personId: string, papel: string) =>
+    save('person', personId, { papel }, 'Papel salvo no CRM');
+
+  return { saveAmount, markAcessoReviewed, savePersonRole };
 };

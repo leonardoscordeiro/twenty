@@ -35,10 +35,19 @@ import {
   type CentralClientTab,
   getCentralHostname,
   getCentralInitials,
+  getCentralPersonPath,
   getNativeRecordPath,
   getSupabaseRef,
   pluralize,
 } from '@/central/utils/centralText';
+import {
+  getPlaybookNote,
+  getPlaybookRules,
+} from '@/central/utils/centralPlaybook';
+import {
+  getCentralPersonName,
+  getPrimaryContact,
+} from '@/central/utils/centralPeople';
 import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 import { styled } from '@linaria/react';
 import { isNonEmptyString } from '@sniptt/guards';
@@ -331,10 +340,12 @@ const StyledChip = styled.span`
   padding: 6px 10px;
 `;
 
-const StyledContact = styled.div`
+const StyledContact = styled(Link)`
   align-items: center;
+  color: ${themeCssVariables.font.color.primary};
   display: flex;
   gap: 12px;
+  text-decoration: none;
 `;
 
 const StyledAvatar = styled.div`
@@ -392,26 +403,6 @@ type CentralPendingItem = {
 
 const PLAYBOOK_BANNER_RULE_COUNT = 4;
 
-const LIST_ITEM_REGEX = /^\s*(?:[-*]|\d+\.)\s+(.*)$/;
-
-const getPlaybookNote = (company: CentralCompany) => {
-  const notes = company.noteTargets
-    .map((noteTarget) => noteTarget.note)
-    .filter(isDefined);
-
-  return (
-    notes.find((note) => note.title?.startsWith('Playbook')) ?? notes.at(0)
-  );
-};
-
-const getPlaybookRules = (markdown: string | null | undefined) =>
-  (markdown ?? '')
-    .split('\n')
-    .map((line) => LIST_ITEM_REGEX.exec(line)?.[1])
-    .filter(isNonEmptyString)
-    .map((item) => item.replace(/\*\*|__|`/g, '').replace(/\\(.)/g, '$1'))
-    .slice(0, 5);
-
 const getReviewLabel = (revisadoEm: string | null, now: Date) => {
   const days = getDaysSinceReview(revisadoEm, now);
 
@@ -462,10 +453,11 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
   const playbookNote = getPlaybookNote(company);
   const playbookMarkdown = playbookNote?.bodyV2?.markdown ?? '';
   const playbookRules = getPlaybookRules(playbookMarkdown);
-  const contact = company.people.at(0);
-  const contactName = [contact?.name?.firstName, contact?.name?.lastName]
-    .filter(isNonEmptyString)
-    .join(' ');
+  const contact = getPrimaryContact(company.people);
+  const contactName = isDefined(contact) ? getCentralPersonName(contact) : '';
+  const otherPeople = company.people.filter(
+    (person) => person.id !== contact?.id,
+  );
   const contactEmail = contact?.emails?.primaryEmail;
   const stackItems = (company.stack ?? '')
     .split(/[,\n·;]/)
@@ -851,10 +843,10 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
 
         <StyledAside>
           <StyledCentralCard>
-            <StyledAsideTitle>Contato</StyledAsideTitle>
+            <StyledAsideTitle>Contato principal</StyledAsideTitle>
             {isDefined(contact) ? (
               <>
-                <StyledContact>
+                <StyledContact to={getCentralPersonPath(contact.id)}>
                   <StyledAvatar>{getCentralInitials(contactName)}</StyledAvatar>
                   <StyledHeroText>
                     <StyledStrong>{contactName || 'Sem nome'}</StyledStrong>
@@ -866,6 +858,22 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
                 {isNonEmptyString(contactEmail) && (
                   <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
                 )}
+                {otherPeople.map((person) => (
+                  <StyledContact
+                    key={person.id}
+                    to={getCentralPersonPath(person.id)}
+                  >
+                    <StyledAvatar>
+                      {getCentralInitials(getCentralPersonName(person))}
+                    </StyledAvatar>
+                    <StyledHeroText>
+                      <span>{getCentralPersonName(person) || 'Sem nome'}</span>
+                      <StyledCentralMuted>
+                        {person.jobTitle ?? 'cargo: preencher'}
+                      </StyledCentralMuted>
+                    </StyledHeroText>
+                  </StyledContact>
+                ))}
               </>
             ) : (
               <StyledCentralFillLink to={companyPath}>
