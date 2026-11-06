@@ -1,6 +1,7 @@
 // Central is a pt-BR screen for a single-user fork; its copy is not in the Lingui catalogs.
 // oxlint-disable lingui/no-unlocalized-strings
 import { LazyMarkdownContent } from '@/ai/components/LazyMarkdownRenderer';
+import { CentralAmountEditor } from '@/central/components/CentralAmountEditor';
 import { CentralPageLayout } from '@/central/components/CentralPageLayout';
 import {
   centralButtonClassName,
@@ -19,29 +20,35 @@ import {
 } from '@/central/components/CentralStyled';
 import { CENTRAL_PATHS } from '@/central/constants/CentralPaths';
 import { useCentralCompanies } from '@/central/hooks/useCentralCompanies';
+import { useCentralRecordUpdates } from '@/central/hooks/useCentralRecordUpdates';
 import { type CentralCompany } from '@/central/types/CentralCompany';
+import { getCentralClientMargin } from '@/central/utils/centralAlerts';
 import {
   formatCentralCostTotal,
   formatCentralCurrency,
   fromAmountMicros,
   getCentralCostSummary,
-  getCentralMargin,
   getDaysSinceReview,
   isAcessoPendingReview,
 } from '@/central/utils/centralMoney';
 import {
+  type CentralClientTab,
+  getCentralHostname,
   getCentralInitials,
   getNativeRecordPath,
+  getSupabaseRef,
   pluralize,
 } from '@/central/utils/centralText';
+import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 import { styled } from '@linaria/react';
 import { isNonEmptyString } from '@sniptt/guards';
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { getSafeUrl, isDefined } from 'twenty-shared/utils';
 import {
+  IconCheck,
   IconChevronLeft,
   IconCode,
+  IconCopy,
   IconExternalLink,
   IconLock,
   IconPencil,
@@ -127,6 +134,96 @@ const StyledHeroActions = styled.div`
   gap: 8px;
 `;
 
+const StyledCopyChip = styled.button`
+  align-items: center;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 9px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  gap: 8px;
+  min-height: 34px;
+  opacity: 0.85;
+  padding: 0 12px;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+const StyledHeroMargin = styled.div`
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const StyledHeroMarginValue = styled.span`
+  font-family: 'Space Grotesk', ${themeCssVariables.font.family};
+  font-size: 30px;
+  font-weight: 600;
+`;
+
+const StyledHeroMarginNote = styled.span`
+  font-size: 13px;
+  opacity: 0.8;
+`;
+
+const StyledRulesBanner = styled.section`
+  align-items: center;
+  background: ${themeCssVariables.tag.background.amber};
+  border-radius: 14px;
+  color: ${themeCssVariables.tag.text.amber};
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 14px;
+  gap: 8px 18px;
+  padding: 12px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+`;
+
+const StyledRulesBannerButton = styled.button`
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  margin-left: auto;
+  padding: 0;
+  text-decoration: underline;
+`;
+
+const StyledAcessoActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const StyledSmallButton = styled.button`
+  align-items: center;
+  background: ${themeCssVariables.background.secondary};
+  border: 1px solid ${themeCssVariables.border.color.strong};
+  border-radius: 8px;
+  color: ${themeCssVariables.font.color.primary};
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 12px;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 32px;
+  overflow: hidden;
+  padding: 0 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const StyledColumns = styled.div`
   align-items: flex-start;
   display: flex;
@@ -157,16 +254,6 @@ const StyledAsideTitle = styled.h2`
   letter-spacing: 0.06em;
   margin: 0;
   text-transform: uppercase;
-`;
-
-const StyledRuleList = styled.ol`
-  display: flex;
-  flex-direction: column;
-  font-size: 15px;
-  gap: 10px;
-  line-height: 1.5;
-  margin: 0;
-  padding-left: 20px;
 `;
 
 const StyledMiniGrid = styled.section`
@@ -303,7 +390,7 @@ type CentralPendingItem = {
   onClick?: () => void;
 };
 
-type CentralTab = (typeof TABS)[number]['id'];
+const PLAYBOOK_BANNER_RULE_COUNT = 4;
 
 const LIST_ITEM_REGEX = /^\s*(?:[-*]|\d+\.)\s+(.*)$/;
 
@@ -332,7 +419,9 @@ const getReviewLabel = (revisadoEm: string | null, now: Date) => {
     return 'nunca revisado';
   }
 
-  return days === 0 ? 'revisado hoje' : `revisado há ${days} dias`;
+  return days === 0
+    ? 'revisado hoje'
+    : `revisado há ${pluralize(days, 'dia', 'dias')}`;
 };
 
 const formatCnpj = (cnpj: string) => {
@@ -345,7 +434,13 @@ const formatCnpj = (cnpj: string) => {
 
 const CentralClientContent = ({ company }: { company: CentralCompany }) => {
   const { getStatusOption, getCustoInfraLabel } = useCentralCompanies();
-  const [activeTab, setActiveTab] = useState<CentralTab>('visao');
+  const { saveAmount, markAcessoReviewed } = useCentralRecordUpdates();
+  const { copyToClipboard } = useCopyToClipboard();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: CentralClientTab =
+    TABS.find((tab) => tab.id === searchParams.get('aba'))?.id ?? 'visao';
+  const setActiveTab = (tab: CentralClientTab) =>
+    setSearchParams({ aba: tab }, { replace: true });
   const now = new Date();
 
   const companyPath = getNativeRecordPath('company', company.id);
@@ -354,7 +449,13 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
   const costSummary = getCentralCostSummary(
     company.custosInfra.map((custo) => custo.custoMensal),
   );
-  const { margin, isIncomplete } = getCentralMargin(mensalidade, costSummary);
+  const { margin, missingCostCount, hasMensalidade } =
+    getCentralClientMargin(company);
+  const marginNote = !hasMensalidade
+    ? 'preencha a mensalidade'
+    : missingCostCount > 0
+      ? `incompleta: faltam ${pluralize(missingCostCount, 'custo', 'custos')}`
+      : 'completa';
   const pendingAcessos = company.acessos.filter((acesso) =>
     isAcessoPendingReview(acesso, now),
   );
@@ -375,19 +476,36 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
   const city = [company.address?.addressCity, company.address?.addressState]
     .filter(isNonEmptyString)
     .join('/');
-  const subtitle = [
-    isNonEmptyString(company.cnpj) ? `CNPJ ${formatCnpj(company.cnpj)}` : null,
-    city,
-  ]
-    .filter(isNonEmptyString)
-    .join(' · ');
-  const missingCostCount = costSummary.count - costSummary.filledCount;
+  const domain = getCentralHostname(company.domainName?.primaryLinkUrl);
+  const supabaseRef = getSupabaseRef([
+    ...company.acessos
+      .filter((acesso) =>
+        [acesso.name, acesso.tipo, acesso.url?.primaryLinkUrl].some((text) =>
+          text?.toLowerCase().includes('supabase'),
+        ),
+      )
+      .flatMap((acesso) => [acesso.url?.primaryLinkUrl, acesso.login]),
+    ...company.custosInfra
+      .filter((custo) =>
+        [custo.provedor, custo.name].some((text) =>
+          text?.toLowerCase().includes('supabase'),
+        ),
+      )
+      .flatMap((custo) => [custo.servico, custo.observacao]),
+  ]);
+  const copyChips = [
+    isNonEmptyString(company.cnpj) && {
+      label: `CNPJ ${formatCnpj(company.cnpj)}`,
+      value: formatCnpj(company.cnpj),
+    },
+    isNonEmptyString(domain) && { label: domain, value: domain },
+    isNonEmptyString(supabaseRef) && {
+      label: `ref ${supabaseRef}`,
+      value: supabaseRef,
+    },
+  ].filter((chip): chip is { label: string; value: string } => chip !== false);
 
   const pendingCandidates: (CentralPendingItem | false)[] = [
-    !isDefined(mensalidade) && {
-      label: 'Preencher mensalidade',
-      to: companyPath,
-    },
     missingCostCount > 0 && {
       label: `Preencher ${pluralize(missingCostCount, 'custo', 'custos')}`,
       onClick: () => setActiveTab('infra'),
@@ -406,44 +524,21 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
     (item): item is CentralPendingItem => item !== false,
   );
 
-  const renderCost = (custo: CentralCompany['custosInfra'][number]) => {
-    const amount = fromAmountMicros(custo.custoMensal);
-
-    return isDefined(amount) ? (
-      formatCentralCurrency(amount)
-    ) : (
-      <StyledCentralFillLink to={getNativeRecordPath('custoInfra', custo.id)}>
-        preencher
-      </StyledCentralFillLink>
-    );
-  };
+  const renderCost = (custo: CentralCompany['custosInfra'][number]) => (
+    <CentralAmountEditor
+      amount={fromAmountMicros(custo.custoMensal)}
+      label={`Custo de ${getCustoInfraLabel('provedor', custo.provedor) ?? custo.name}`}
+      onSave={(amount) => saveAmount('custoInfra', custo.id, amount)}
+    />
+  );
 
   return (
     <CentralPageLayout title={company.name ?? 'Cliente'}>
-      <StyledBackLink to={CENTRAL_PATHS.clients}>
-        <IconChevronLeft size={16} />
-        Meus clientes
-      </StyledBackLink>
-
-      <StyledHero>
-        <StyledHeroIdentity>
-          <StyledHeroInitials>
-            {getCentralInitials(company.name)}
-          </StyledHeroInitials>
-          <StyledHeroText>
-            <StyledHeroTitleRow>
-              <StyledHeroTitle>{company.name}</StyledHeroTitle>
-              {isDefined(statusOption) && (
-                <Tag color={statusOption.color}>{statusOption.label}</Tag>
-              )}
-            </StyledHeroTitleRow>
-            <StyledHeroSubtitle>
-              {isNonEmptyString(subtitle)
-                ? subtitle
-                : 'CNPJ e cidade: preencher'}
-            </StyledHeroSubtitle>
-          </StyledHeroText>
-        </StyledHeroIdentity>
+      <StyledRowBetween>
+        <StyledBackLink to={CENTRAL_PATHS.clients}>
+          <IconChevronLeft size={16} />
+          Meus clientes
+        </StyledBackLink>
         <StyledHeroActions>
           {isDefined(appUrl) && (
             <a
@@ -472,21 +567,78 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
             Editar
           </Link>
         </StyledHeroActions>
+      </StyledRowBetween>
+
+      <StyledHero>
+        <StyledHeroIdentity>
+          <StyledHeroInitials>
+            {getCentralInitials(company.name)}
+          </StyledHeroInitials>
+          <StyledHeroText>
+            <StyledHeroTitleRow>
+              <StyledHeroTitle>{company.name}</StyledHeroTitle>
+              {isDefined(statusOption) && (
+                <Tag color={statusOption.color}>{statusOption.label}</Tag>
+              )}
+            </StyledHeroTitleRow>
+            {isNonEmptyString(city) && (
+              <StyledHeroSubtitle>{city}</StyledHeroSubtitle>
+            )}
+            <StyledHeroActions>
+              {copyChips.map((chip) => (
+                <StyledCopyChip
+                  key={chip.label}
+                  type="button"
+                  aria-label={`Copiar ${chip.label}`}
+                  onClick={() => copyToClipboard(chip.value, 'Copiado')}
+                >
+                  {chip.label}
+                  <IconCopy size={14} />
+                </StyledCopyChip>
+              ))}
+              {!isNonEmptyString(company.cnpj) && (
+                <StyledHeroSubtitle>CNPJ: preencher</StyledHeroSubtitle>
+              )}
+            </StyledHeroActions>
+          </StyledHeroText>
+        </StyledHeroIdentity>
+        <StyledHeroMargin>
+          <StyledHeroSubtitle>Margem / mês</StyledHeroSubtitle>
+          <StyledHeroMarginValue>
+            {isDefined(margin) ? formatCentralCurrency(margin) : '—'}
+          </StyledHeroMarginValue>
+          <StyledHeroMarginNote>{marginNote}</StyledHeroMarginNote>
+        </StyledHeroMargin>
       </StyledHero>
+
+      {playbookRules.length > 0 && (
+        <StyledRulesBanner aria-label="Antes de mexer">
+          <strong>Antes de mexer:</strong>
+          {playbookRules.slice(0, PLAYBOOK_BANNER_RULE_COUNT).map((rule) => (
+            <span key={rule}>{rule}</span>
+          ))}
+          <StyledRulesBannerButton
+            type="button"
+            onClick={() => setActiveTab('playbook')}
+          >
+            Ver playbook
+          </StyledRulesBannerButton>
+        </StyledRulesBanner>
+      )}
 
       <StyledCentralKpiGrid aria-label="Números do cliente">
         <StyledCentralKpi>
           <StyledCentralKpiLabel>Mensalidade</StyledCentralKpiLabel>
           <StyledCentralKpiValue>
-            {formatCentralCurrency(mensalidade)}
+            <CentralAmountEditor
+              amount={mensalidade}
+              label="Mensalidade"
+              onSave={(amount) => saveAmount('company', company.id, amount)}
+            />
           </StyledCentralKpiValue>
-          {isDefined(mensalidade) ? (
-            <StyledCentralKpiHint>por mês</StyledCentralKpiHint>
-          ) : (
-            <StyledCentralFillLink to={companyPath}>
-              preencher
-            </StyledCentralFillLink>
-          )}
+          <StyledCentralKpiHint>
+            clique no valor · Enter salva · Esc cancela
+          </StyledCentralKpiHint>
         </StyledCentralKpi>
         <StyledCentralKpi>
           <StyledCentralKpiLabel>Infra / mês</StyledCentralKpiLabel>
@@ -502,10 +654,8 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
           <StyledCentralKpiValue>
             {isDefined(margin) ? formatCentralCurrency(margin) : '—'}
           </StyledCentralKpiValue>
-          <StyledCentralKpiHint warning={isDefined(margin) && isIncomplete}>
-            {isDefined(margin) && isIncomplete
-              ? 'incompleto: falta custo'
-              : 'mensalidade menos infra'}
+          <StyledCentralKpiHint warning={marginNote !== 'completa'}>
+            {marginNote}
           </StyledCentralKpiHint>
         </StyledCentralKpi>
         <StyledCentralKpi inverted={pendingAcessos.length > 0}>
@@ -536,30 +686,6 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
         <StyledMainColumn>
           {activeTab === 'visao' && (
             <>
-              <StyledCentralCard>
-                <StyledCentralSectionTitle>
-                  Antes de mexer, lembre
-                </StyledCentralSectionTitle>
-                {playbookRules.length > 0 ? (
-                  <StyledRuleList>
-                    {playbookRules.map((rule) => (
-                      <li key={rule}>{rule}</li>
-                    ))}
-                  </StyledRuleList>
-                ) : (
-                  <StyledCentralMuted>
-                    Sem regras no playbook ainda.
-                  </StyledCentralMuted>
-                )}
-                <button
-                  type="button"
-                  className={centralButtonClassName}
-                  style={{ alignSelf: 'flex-start' }}
-                  onClick={() => setActiveTab('playbook')}
-                >
-                  Ver playbook completo
-                </button>
-              </StyledCentralCard>
               <StyledMiniGrid aria-label="Infra">
                 {company.custosInfra.map((custo) => (
                   <StyledCentralCard key={custo.id}>
@@ -623,6 +749,11 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
                 const acessoUrl = getSafeUrl(acesso.url?.primaryLinkUrl);
                 const isPending = isAcessoPendingReview(acesso, now);
                 const reviewLabel = getReviewLabel(acesso.revisadoEm, now);
+                const copyValue = isNonEmptyString(acesso.login)
+                  ? acesso.login
+                  : getCentralHostname(acesso.url?.primaryLinkUrl);
+                const isReviewedToday =
+                  getDaysSinceReview(acesso.revisadoEm, now) === 0;
 
                 return (
                   <StyledCentralCard key={acesso.id}>
@@ -630,9 +761,9 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
                       <StyledHeroText>
                         <StyledStrong>{acesso.name}</StyledStrong>
                         <StyledCentralMuted>
-                          {acesso.ondeEstaASenha ?? 'Cofre: preencher caminho'}
-                          {isNonEmptyString(acesso.login) &&
-                            ` · ${acesso.login}`}
+                          senha:{' '}
+                          {acesso.ondeEstaASenha ??
+                            'preencher caminho do cofre'}
                         </StyledCentralMuted>
                       </StyledHeroText>
                       <StyledRowBetween>
@@ -663,6 +794,27 @@ const CentralClientContent = ({ company }: { company: CentralCompany }) => {
                         )}
                       </StyledRowBetween>
                     </StyledRowBetween>
+                    <StyledAcessoActions>
+                      {isNonEmptyString(copyValue) && (
+                        <StyledSmallButton
+                          type="button"
+                          aria-label={`Copiar ${copyValue}`}
+                          onClick={() => copyToClipboard(copyValue, 'Copiado')}
+                        >
+                          <IconCopy size={14} />
+                          {copyValue}
+                        </StyledSmallButton>
+                      )}
+                      {!isReviewedToday && (
+                        <StyledSmallButton
+                          type="button"
+                          onClick={() => markAcessoReviewed(acesso.id)}
+                        >
+                          <IconCheck size={14} />
+                          Marcar revisado
+                        </StyledSmallButton>
+                      )}
+                    </StyledAcessoActions>
                   </StyledCentralCard>
                 );
               })}
