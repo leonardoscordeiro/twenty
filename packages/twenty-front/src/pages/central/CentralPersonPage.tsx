@@ -70,10 +70,6 @@ const StyledHero = styled.header`
   gap: 20px;
   justify-content: space-between;
   padding: 24px;
-
-  a {
-    color: inherit;
-  }
 `;
 
 const StyledHeroIdentity = styled.div`
