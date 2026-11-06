@@ -409,7 +409,7 @@ const getPlaybookRules = (markdown: string | null | undefined) =>
     .split('\n')
     .map((line) => LIST_ITEM_REGEX.exec(line)?.[1])
     .filter(isNonEmptyString)
-    .map((item) => item.replace(/\*\*|__|`/g, ''))
+    .map((item) => item.replace(/\*\*|__|`/g, '').replace(/\\(.)/g, '$1'))
     .slice(0, 5);
 
 const getReviewLabel = (revisadoEm: string | null, now: Date) => {
