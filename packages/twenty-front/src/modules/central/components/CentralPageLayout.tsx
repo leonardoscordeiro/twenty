@@ -10,6 +10,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { IconLayoutDashboard } from 'twenty-ui/icon';
 import { themeCssVariables, useTheme } from 'twenty-ui/theme';
 
+// Scrolling column: children with overflow hidden would otherwise shrink to nothing.
 const StyledBody = styled.div`
   background: ${themeCssVariables.background.secondary};
   box-sizing: border-box;
@@ -21,6 +22,10 @@ const StyledBody = styled.div`
   min-height: 0;
   overflow-y: auto;
   padding: 24px clamp(16px, 4vw, 48px) 48px;
+
+  & > * {
+    flex-shrink: 0;
+  }
 `;
 
 const StyledNav = styled.nav`
