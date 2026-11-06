@@ -1,5 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 
+import { PermissionFlagType } from 'twenty-shared/constants';
 import { ApiPath } from 'twenty-shared/types';
 
 import { CentralMonitorService } from 'src/engine/core-modules/central-monitor/central-monitor.service';
@@ -19,7 +20,7 @@ import { AccessPolicyGuard } from 'src/engine/guards/access-policy.guard';
       oauthClient: false,
       application: false,
     },
-    requiredPermissionFlags: [],
+    requiredPermissionFlags: [PermissionFlagType.WORKSPACE],
   }),
 )
 export class CentralMonitorController {
