@@ -1,5 +1,6 @@
 // Central is a pt-BR screen for a single-user fork; its copy is not in the Lingui catalogs.
 // oxlint-disable lingui/no-unlocalized-strings
+import { CENTRAL_AUTOMATION_PATHS } from '@/central/constants/CentralAutomationPaths';
 import { CENTRAL_PATHS } from '@/central/constants/CentralPaths';
 import { PageCardHeader } from '@/ui/layout/page/components/PageCardHeader';
 import { PageCardLayout } from '@/ui/layout/page/components/PageCardLayout';
@@ -62,6 +63,8 @@ export const CentralPageLayout = ({
     { to: CENTRAL_PATHS.clients, label: 'Clientes' },
     { to: CENTRAL_PATHS.opportunities, label: 'Oportunidades' },
     { to: CENTRAL_PATHS.infra, label: 'Infra e custos' },
+    { to: CENTRAL_AUTOMATION_PATHS.workflows, label: 'Fluxos' },
+    { to: CENTRAL_AUTOMATION_PATHS.campaigns, label: 'Campanhas' },
   ];
   const activeTo =
     navItems.find(

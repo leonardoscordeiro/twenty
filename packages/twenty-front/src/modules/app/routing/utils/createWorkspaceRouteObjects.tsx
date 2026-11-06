@@ -3,6 +3,7 @@ import { AppPath } from 'twenty-shared/types';
 import { getAppPath } from 'twenty-shared/utils';
 
 import { LazyRoute } from '@/app/components/LazyRoute';
+import { CENTRAL_AUTOMATION_PATHS } from '@/central/constants/CentralAutomationPaths';
 import { CENTRAL_PATHS } from '@/central/constants/CentralPaths';
 import { NavigatePreservingSearchAndHash } from '@/app/routing/components/NavigatePreservingSearchAndHash';
 import {
@@ -100,6 +101,18 @@ const CentralInfraPage = lazy(() =>
 const CentralOpportunitiesPage = lazy(() =>
   import('~/pages/central/CentralOpportunitiesPage').then((module) => ({
     default: module.CentralOpportunitiesPage,
+  })),
+);
+
+const CentralWorkflowsPage = lazy(() =>
+  import('~/pages/central/CentralWorkflowsPage').then((module) => ({
+    default: module.CentralWorkflowsPage,
+  })),
+);
+
+const CentralCampaignsPage = lazy(() =>
+  import('~/pages/central/CentralCampaignsPage').then((module) => ({
+    default: module.CentralCampaignsPage,
   })),
 );
 
@@ -261,6 +274,22 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <CentralOpportunitiesPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_AUTOMATION_PATHS.workflows,
+      element: (
+        <LazyRoute>
+          <CentralWorkflowsPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_AUTOMATION_PATHS.campaigns,
+      element: (
+        <LazyRoute>
+          <CentralCampaignsPage />
         </LazyRoute>
       ),
     },
