@@ -9,7 +9,7 @@ import { getRecordsFromRecordConnection } from '@/object-record/cache/utils/getR
 import { type RecordGqlConnectionEdgesRequired } from '@/object-record/graphql/types/RecordGqlConnectionEdgesRequired';
 
 // Shape returned by the companies query in production: relations are connections and the
-// workspace names them freely (custoInfraCliente, acessosCliente), some with no edges.
+// production workspace names them custosDeInfra and acessos, some with no edges.
 const COMPANIES_RESPONSE = {
   __typename: 'CompanyConnection',
   edges: [
@@ -24,7 +24,7 @@ const COMPANIES_RESPONSE = {
           amountMicros: null,
           currencyCode: 'BRL',
         },
-        custoInfraCliente: {
+        custosDeInfra: {
           __typename: 'CustoInfraConnection',
           edges: [
             {
@@ -59,7 +59,7 @@ const COMPANIES_RESPONSE = {
             },
           ],
         },
-        acessosCliente: {
+        acessos: {
           __typename: 'AcessoConnection',
           edges: [
             {
@@ -88,8 +88,8 @@ const COMPANIES_RESPONSE = {
           amountMicros: 300_000_000,
           currencyCode: 'BRL',
         },
-        custoInfraCliente: { __typename: 'CustoInfraConnection', edges: [] },
-        acessosCliente: {
+        custosDeInfra: { __typename: 'CustoInfraConnection', edges: [] },
+        acessos: {
           __typename: 'AcessoConnection',
           edges: [
             {
@@ -111,8 +111,8 @@ const COMPANIES_RESPONSE = {
 } as unknown as RecordGqlConnectionEdgesRequired;
 
 const RELATION_FIELD_NAMES = [
-  { target: 'custoInfra', fieldName: 'custoInfraCliente' },
-  { target: 'acesso', fieldName: 'acessosCliente' },
+  { target: 'custoInfra', fieldName: 'custosDeInfra' },
+  { target: 'acesso', fieldName: 'acessos' },
   { target: 'noteTarget', fieldName: 'noteTargets' },
   // Relation missing from this workspace's metadata.
   { target: 'person', fieldName: undefined },
