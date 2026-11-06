@@ -119,6 +119,10 @@ export const useCentralCompanies = () => {
     objectNameSingular: 'custoInfra',
   });
 
+  const { objectMetadataItem: acessoMetadataItem } = useObjectMetadataItem({
+    objectNameSingular: 'acesso',
+  });
+
   const statusOptions =
     objectMetadataItem.fields.find((field) => field.name === 'statusCliente')
       ?.options ?? [];
@@ -135,9 +139,25 @@ export const useCentralCompanies = () => {
   const getProdutoLabel = (value: string | null) =>
     getSelectOption(objectMetadataItem, 'produto', value)?.label ?? value;
 
+  const getAcessoLabel = (fieldName: 'tipo', value: string | null) =>
+    getSelectOption(acessoMetadataItem, fieldName, value)?.label ?? value;
+
+  const custoRows = companies.flatMap((company) =>
+    company.custosInfra.map((custo) => ({
+      custo,
+      provider:
+        getCustoInfraLabel('provedor', custo.provedor) ??
+        custo.name ??
+        'Sem provedor',
+      clientName: company.name ?? 'Sem nome',
+    })),
+  );
+
   return {
     companies,
     getProdutoLabel,
+    custoRows,
+    getAcessoLabel,
     loading,
     statusOptions,
     getStatusOption,

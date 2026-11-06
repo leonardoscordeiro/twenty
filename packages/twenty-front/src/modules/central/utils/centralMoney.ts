@@ -1,6 +1,7 @@
 // Central is a pt-BR screen for a single-user fork; its copy is not in the Lingui catalogs.
 // oxlint-disable lingui/no-unlocalized-strings
 import { type CentralAcesso } from '@/central/types/CentralCompany';
+import { pluralize } from '@/central/utils/centralText';
 import { isDefined } from 'twenty-shared/utils';
 
 const REVIEW_MAX_AGE_IN_DAYS = 90;
@@ -97,4 +98,16 @@ export const isAcessoPendingReview = (acesso: CentralAcesso, now: Date) => {
   const days = getDaysSinceReview(acesso.revisadoEm, now);
 
   return !isDefined(days) || days > REVIEW_MAX_AGE_IN_DAYS;
+};
+
+export const getReviewLabel = (revisadoEm: string | null, now: Date) => {
+  const days = getDaysSinceReview(revisadoEm, now);
+
+  if (!isDefined(days)) {
+    return 'nunca revisado';
+  }
+
+  return days === 0
+    ? 'revisado hoje'
+    : `revisado há ${pluralize(days, 'dia', 'dias')}`;
 };
