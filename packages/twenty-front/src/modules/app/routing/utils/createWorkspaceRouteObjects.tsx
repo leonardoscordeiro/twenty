@@ -92,6 +92,18 @@ const CentralClientPage = lazy(() =>
   })),
 );
 
+const CentralTasksPage = lazy(() =>
+  import('~/pages/central/CentralTasksPage').then((module) => ({
+    default: module.CentralTasksPage,
+  })),
+);
+
+const CentralNotesPage = lazy(() =>
+  import('~/pages/central/CentralNotesPage').then((module) => ({
+    default: module.CentralNotesPage,
+  })),
+);
+
 const CentralInfraPage = lazy(() =>
   import('~/pages/central/CentralInfraPage').then((module) => ({
     default: module.CentralInfraPage,
@@ -280,6 +292,22 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <CentralOpportunitiesPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.tasks,
+      element: (
+        <LazyRoute>
+          <CentralTasksPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.notes,
+      element: (
+        <LazyRoute>
+          <CentralNotesPage />
         </LazyRoute>
       ),
     },
