@@ -9,7 +9,12 @@ import {
 import { getCentralClientPath, pluralize } from '@/central/utils/centralText';
 import { isDefined, isPlainObject } from 'twenty-shared/utils';
 
-export type CentralAlertId = 'mensalidade' | 'custos' | 'acessos';
+export type CentralAlertId =
+  | 'mensalidade'
+  | 'custos'
+  | 'acessos'
+  | 'saude'
+  | 'vencimentos';
 
 export type CentralAlertLink = { label: string; path: string };
 

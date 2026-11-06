@@ -118,6 +118,18 @@ const PaineisPage = lazy(() =>
   })),
 );
 
+const CentralExpirationsPage = lazy(() =>
+  import('~/pages/central/CentralExpirationsPage').then((module) => ({
+    default: module.CentralExpirationsPage,
+  })),
+);
+
+const CentralHealthPage = lazy(() =>
+  import('~/pages/central/CentralHealthPage').then((module) => ({
+    default: module.CentralHealthPage,
+  })),
+);
+
 const CentralOpportunitiesPage = lazy(() =>
   import('~/pages/central/CentralOpportunitiesPage').then((module) => ({
     default: module.CentralOpportunitiesPage,
@@ -344,6 +356,22 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <CentralCampaignsPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.expirations,
+      element: (
+        <LazyRoute>
+          <CentralExpirationsPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: CENTRAL_PATHS.health,
+      element: (
+        <LazyRoute>
+          <CentralHealthPage />
         </LazyRoute>
       ),
     },

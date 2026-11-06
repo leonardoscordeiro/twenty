@@ -15,6 +15,14 @@ import {
   StyledCentralTitle,
 } from '@/central/components/CentralStyled';
 import { useCentralCompanies } from '@/central/hooks/useCentralCompanies';
+import {
+  useCentralExpirations,
+  useCentralHealth,
+} from '@/central/hooks/useCentralMonitor';
+import {
+  getCentralExpirationRows,
+  getCentralMonitorAlerts,
+} from '@/central/utils/centralMonitor';
 import { type CentralCompany } from '@/central/types/CentralCompany';
 import {
   getCentralAlerts,
@@ -414,9 +422,16 @@ export const CentralClientsPage = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
 
-  const alerts = getCentralAlerts(companies, now).filter(
-    (alert) => !isAlertSnoozed(snoozedAlerts, alert.id, now),
-  );
+  const health = useCentralHealth();
+  const expirations = useCentralExpirations();
+  const alerts = [
+    ...getCentralMonitorAlerts(
+      health.data?.targets ?? [],
+      getCentralExpirationRows(expirations.data?.items ?? [], companies),
+      now,
+    ),
+    ...getCentralAlerts(companies, now),
+  ].filter((alert) => !isAlertSnoozed(snoozedAlerts, alert.id, now));
 
   const revenueValues = companies.map((company) =>
     fromAmountMicros(company.mensalidade),
