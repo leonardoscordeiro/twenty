@@ -97,6 +97,12 @@ const CentralInfraPage = lazy(() =>
   })),
 );
 
+const CentralOpportunitiesPage = lazy(() =>
+  import('~/pages/central/CentralOpportunitiesPage').then((module) => ({
+    default: module.CentralOpportunitiesPage,
+  })),
+);
+
 const NotFound = lazy(() =>
   import('~/pages/not-found/NotFound').then((module) => ({
     default: module.NotFound,
@@ -247,6 +253,14 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <CentralInfraPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: `${CENTRAL_PATHS.opportunities}/*`,
+      element: (
+        <LazyRoute>
+          <CentralOpportunitiesPage />
         </LazyRoute>
       ),
     },
