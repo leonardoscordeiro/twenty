@@ -30,6 +30,18 @@ export type CentralAcesso = ObjectRecord & {
   revisadoEm: string | null;
 };
 
+// papel is optional: the field only exists once it is created in the workspace.
+export type CentralPerson = ObjectRecord & {
+  name: { firstName: string | null; lastName: string | null } | null;
+  jobTitle: string | null;
+  emails: { primaryEmail: string | null } | null;
+  phones?: {
+    primaryPhoneNumber: string | null;
+    primaryPhoneCallingCode: string | null;
+  } | null;
+  papel?: string | null;
+};
+
 export type CentralCompany = ObjectRecord & {
   name: string | null;
   domainName: CentralLinks;
@@ -41,11 +53,7 @@ export type CentralCompany = ObjectRecord & {
   repositorio: CentralLinks;
   stack: string | null;
   address: { addressCity: string | null; addressState: string | null } | null;
-  people: (ObjectRecord & {
-    name: { firstName: string | null; lastName: string | null } | null;
-    jobTitle: string | null;
-    emails: { primaryEmail: string | null } | null;
-  })[];
+  people: CentralPerson[];
   custosInfra: CentralCustoInfra[];
   acessos: CentralAcesso[];
   noteTargets: (ObjectRecord & {
