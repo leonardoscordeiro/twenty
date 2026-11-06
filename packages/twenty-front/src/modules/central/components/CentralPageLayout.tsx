@@ -61,6 +61,8 @@ export const CentralPageLayout = ({
   const navItems = [
     { to: CENTRAL_PATHS.clients, label: 'Clientes' },
     { to: CENTRAL_PATHS.opportunities, label: 'Oportunidades' },
+    { to: CENTRAL_PATHS.tasks, label: 'Tarefas' },
+    { to: CENTRAL_PATHS.notes, label: 'Notas' },
     { to: CENTRAL_PATHS.infra, label: 'Infra e custos' },
   ];
   const activeTo =
