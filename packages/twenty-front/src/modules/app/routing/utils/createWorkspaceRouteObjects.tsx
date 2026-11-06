@@ -5,6 +5,7 @@ import { getAppPath } from 'twenty-shared/utils';
 import { LazyRoute } from '@/app/components/LazyRoute';
 import { CENTRAL_DIRECTORY_PATHS } from '@/central/constants/CentralDirectoryPaths';
 import { CENTRAL_PATHS } from '@/central/constants/CentralPaths';
+import { PAINEIS_PATH } from '@/paineis/constants/PaineisPaths';
 import { NavigatePreservingSearchAndHash } from '@/app/routing/components/NavigatePreservingSearchAndHash';
 import {
   createSettingsRouteObjects,
@@ -107,6 +108,12 @@ const CentralNotesPage = lazy(() =>
 const CentralInfraPage = lazy(() =>
   import('~/pages/central/CentralInfraPage').then((module) => ({
     default: module.CentralInfraPage,
+  })),
+);
+
+const PaineisPage = lazy(() =>
+  import('~/pages/paineis/PaineisPage').then((module) => ({
+    default: module.PaineisPage,
   })),
 );
 
@@ -340,6 +347,14 @@ export const createWorkspaceRouteObjects = ({
       element: (
         <LazyRoute>
           <CentralPersonPage />
+        </LazyRoute>
+      ),
+    },
+    {
+      path: PAINEIS_PATH,
+      element: (
+        <LazyRoute>
+          <PaineisPage />
         </LazyRoute>
       ),
     },
