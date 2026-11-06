@@ -2,9 +2,11 @@ import { type CentralCompany } from '@/central/types/CentralCompany';
 import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
 import { useFindManyRecords } from '@/object-record/hooks/useFindManyRecords';
-import { type RecordGqlFields } from 'twenty-shared/types';
+import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
+import { type RecordGqlFields, RelationType } from 'twenty-shared/types';
+import { isDefined } from 'twenty-shared/utils';
 
-const CENTRAL_COMPANY_GQL_FIELDS: RecordGqlFields = {
+const COMPANY_SCALAR_GQL_FIELDS: RecordGqlFields = {
   id: true,
   name: true,
   domainName: true,
@@ -16,8 +18,13 @@ const CENTRAL_COMPANY_GQL_FIELDS: RecordGqlFields = {
   repositorio: true,
   stack: true,
   address: true,
-  people: { id: true, name: true, jobTitle: true, emails: true },
-  custosInfra: {
+};
+
+// Keyed by target object: the generated query silently drops field names
+// missing from metadata, so relation names are resolved at runtime.
+const RELATION_GQL_FIELDS_BY_TARGET = {
+  person: { id: true, name: true, jobTitle: true, emails: true },
+  custoInfra: {
     id: true,
     name: true,
     provedor: true,
@@ -27,7 +34,7 @@ const CENTRAL_COMPANY_GQL_FIELDS: RecordGqlFields = {
     renovacao: true,
     observacao: true,
   },
-  acessos: {
+  acesso: {
     id: true,
     name: true,
     tipo: true,
@@ -37,11 +44,32 @@ const CENTRAL_COMPANY_GQL_FIELDS: RecordGqlFields = {
     quemTemAcesso: true,
     revisadoEm: true,
   },
-  noteTargets: {
-    id: true,
-    note: { id: true, title: true, bodyV2: true },
-  },
+  noteTarget: { id: true, note: { id: true, title: true, bodyV2: true } },
+} satisfies Record<string, RecordGqlFields>;
+
+type RelationTarget = keyof typeof RELATION_GQL_FIELDS_BY_TARGET;
+
+const COMPANY_KEY_BY_TARGET: Record<RelationTarget, keyof CentralCompany> = {
+  person: 'people',
+  custoInfra: 'custosInfra',
+  acesso: 'acessos',
+  noteTarget: 'noteTargets',
 };
+
+const RELATION_TARGETS = Object.keys(
+  RELATION_GQL_FIELDS_BY_TARGET,
+) as RelationTarget[];
+
+const getOneToManyFieldName = (
+  objectMetadataItem: EnrichedObjectMetadataItem,
+  target: RelationTarget,
+) =>
+  objectMetadataItem.fields.find(
+    (field) =>
+      field.isActive &&
+      field.relation?.type === RelationType.ONE_TO_MANY &&
+      field.relation.targetObjectMetadata.nameSingular === target,
+  )?.name;
 
 const getSelectOption = (
   objectMetadataItem: EnrichedObjectMetadataItem,
@@ -53,12 +81,46 @@ const getSelectOption = (
     ?.options?.find((option) => option.value === value);
 
 export const useCentralCompanies = () => {
-  const { records, loading, objectMetadataItem } =
-    useFindManyRecords<CentralCompany>({
-      objectNameSingular: 'company',
-      recordGqlFields: CENTRAL_COMPANY_GQL_FIELDS,
-      orderBy: [{ name: 'AscNullsLast' }],
-    });
+  const { objectMetadataItem } = useObjectMetadataItem({
+    objectNameSingular: 'company',
+  });
+
+  const relationFieldNames = RELATION_TARGETS.map((target) => ({
+    target,
+    fieldName: getOneToManyFieldName(objectMetadataItem, target),
+  }));
+
+  const recordGqlFields: RecordGqlFields = {
+    ...COMPANY_SCALAR_GQL_FIELDS,
+    ...Object.fromEntries(
+      relationFieldNames
+        .filter(({ fieldName }) => isDefined(fieldName))
+        .map(({ target, fieldName }) => [
+          fieldName,
+          RELATION_GQL_FIELDS_BY_TARGET[target],
+        ]),
+    ),
+  };
+
+  const { records, loading } = useFindManyRecords<ObjectRecord>({
+    objectNameSingular: 'company',
+    recordGqlFields,
+    orderBy: [{ name: 'AscNullsLast' }],
+  });
+
+  const companies = records.map((record) => ({
+    ...record,
+    ...Object.fromEntries(
+      relationFieldNames.map(({ target, fieldName }) => {
+        const value = isDefined(fieldName) ? record[fieldName] : undefined;
+
+        return [
+          COMPANY_KEY_BY_TARGET[target],
+          Array.isArray(value) ? value.filter(isDefined) : [],
+        ];
+      }),
+    ),
+  })) as CentralCompany[];
 
   const { objectMetadataItem: custoInfraMetadataItem } = useObjectMetadataItem({
     objectNameSingular: 'custoInfra',
@@ -78,7 +140,7 @@ export const useCentralCompanies = () => {
     getSelectOption(custoInfraMetadataItem, fieldName, value)?.label ?? value;
 
   return {
-    companies: records,
+    companies,
     loading,
     statusOptions,
     getStatusOption,
