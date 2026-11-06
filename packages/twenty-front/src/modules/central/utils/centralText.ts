@@ -1,6 +1,6 @@
 import { isNonEmptyString } from '@sniptt/guards';
 import { AppPath } from 'twenty-shared/types';
-import { getAppPath } from 'twenty-shared/utils';
+import { getAppPath, isDefined } from 'twenty-shared/utils';
 
 export const getCentralInitials = (name: string | null) => {
   const words = (name ?? '').split(/\s+/).filter(isNonEmptyString);
@@ -36,3 +36,19 @@ export const getNativeRecordPath = (
 
 export const pluralize = (count: number, singular: string, plural: string) =>
   `${count} ${count === 1 ? singular : plural}`;
+
+export type CentralClientTab = 'visao' | 'infra' | 'acessos' | 'playbook';
+
+export const getCentralClientPath = (
+  companyId: string,
+  tab?: CentralClientTab,
+) => `/central/${companyId}${isDefined(tab) ? `?aba=${tab}` : ''}`;
+
+const SUPABASE_REF_REGEX = /\b([a-z]{20})\b/;
+
+// Supabase project refs are 20 lowercase letters; callers pass only Supabase-related text.
+export const getSupabaseRef = (texts: (string | null | undefined)[]) =>
+  texts
+    .filter(isNonEmptyString)
+    .map((text) => SUPABASE_REF_REGEX.exec(text)?.[1])
+    .find(isNonEmptyString);

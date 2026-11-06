@@ -1,4 +1,7 @@
-import { type CentralCompany } from '@/central/types/CentralCompany';
+import {
+  type CentralRelationTarget,
+  toCentralCompanies,
+} from '@/central/utils/toCentralCompanies';
 import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
 import { useFindManyRecords } from '@/object-record/hooks/useFindManyRecords';
@@ -47,22 +50,13 @@ const RELATION_GQL_FIELDS_BY_TARGET = {
   noteTarget: { id: true, note: { id: true, title: true, bodyV2: true } },
 } satisfies Record<string, RecordGqlFields>;
 
-type RelationTarget = keyof typeof RELATION_GQL_FIELDS_BY_TARGET;
-
-const COMPANY_KEY_BY_TARGET: Record<RelationTarget, keyof CentralCompany> = {
-  person: 'people',
-  custoInfra: 'custosInfra',
-  acesso: 'acessos',
-  noteTarget: 'noteTargets',
-};
-
 const RELATION_TARGETS = Object.keys(
   RELATION_GQL_FIELDS_BY_TARGET,
-) as RelationTarget[];
+) as CentralRelationTarget[];
 
 const getOneToManyFieldName = (
   objectMetadataItem: EnrichedObjectMetadataItem,
-  target: RelationTarget,
+  target: CentralRelationTarget,
 ) =>
   objectMetadataItem.fields.find(
     (field) =>
@@ -108,19 +102,7 @@ export const useCentralCompanies = () => {
     orderBy: [{ name: 'AscNullsLast' }],
   });
 
-  const companies = records.map((record) => ({
-    ...record,
-    ...Object.fromEntries(
-      relationFieldNames.map(({ target, fieldName }) => {
-        const value = isDefined(fieldName) ? record[fieldName] : undefined;
-
-        return [
-          COMPANY_KEY_BY_TARGET[target],
-          Array.isArray(value) ? value.filter(isDefined) : [],
-        ];
-      }),
-    ),
-  })) as CentralCompany[];
+  const companies = toCentralCompanies(records, relationFieldNames);
 
   const { objectMetadataItem: custoInfraMetadataItem } = useObjectMetadataItem({
     objectNameSingular: 'custoInfra',
