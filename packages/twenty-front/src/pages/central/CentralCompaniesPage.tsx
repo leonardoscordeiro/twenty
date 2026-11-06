@@ -319,10 +319,15 @@ export const CentralCompaniesPage = () => {
     companies.some((company) => company.statusCliente === option.value),
   );
   const statusSummary = usedStatusOptions
-    .map(
-      (option) =>
-        `${companies.filter((company) => company.statusCliente === option.value).length} ${option.label.toLowerCase()}`,
-    )
+    .map((option) => {
+      const count = companies.filter(
+        (company) => company.statusCliente === option.value,
+      ).length;
+      const label = option.label.toLowerCase();
+
+      // Single-word status labels are adjectives (ativo, pausado) that agree in number.
+      return `${count} ${count > 1 && !label.includes(' ') ? `${label}s` : label}`;
+    })
     .join(' · ');
 
   const clearFilters = () => {
