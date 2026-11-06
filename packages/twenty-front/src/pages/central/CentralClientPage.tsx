@@ -29,6 +29,7 @@ import {
   fromAmountMicros,
   getCentralCostSummary,
   getDaysSinceReview,
+  getReviewLabel,
   isAcessoPendingReview,
 } from '@/central/utils/centralMoney';
 import {
@@ -402,18 +403,6 @@ type CentralPendingItem = {
 };
 
 const PLAYBOOK_BANNER_RULE_COUNT = 4;
-
-const getReviewLabel = (revisadoEm: string | null, now: Date) => {
-  const days = getDaysSinceReview(revisadoEm, now);
-
-  if (!isDefined(days)) {
-    return 'nunca revisado';
-  }
-
-  return days === 0
-    ? 'revisado hoje'
-    : `revisado há ${pluralize(days, 'dia', 'dias')}`;
-};
 
 const formatCnpj = (cnpj: string) => {
   const digits = cnpj.replace(/\D/g, '');

@@ -1,3 +1,7 @@
+import {
+  CentralNativeList,
+  isCentralNativeList,
+} from '@/central/components/CentralNativeList';
 import { WorkspaceRouteUnavailable } from '@/ui/layout/page/components/WorkspaceRouteUnavailable';
 import { contextStoreCurrentObjectMetadataItemIdComponentState } from '@/context-store/states/contextStoreCurrentObjectMetadataItemIdComponentState';
 import { useObjectMetadataItems } from '@/object-metadata/hooks/useObjectMetadataItems';
@@ -10,11 +14,12 @@ import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/use
 import { metadataStoreState } from '@/metadata-store/states/metadataStoreState';
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { isUndefined } from '@sniptt/guards';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 export const RecordIndexPage = () => {
   const workspaceSurface = useWorkspaceSurface();
   const { objectNamePlural } = useParams<{ objectNamePlural: string }>();
+  const [searchParams] = useSearchParams();
 
   const contextStoreCurrentObjectMetadataItemId = useAtomComponentStateValue(
     contextStoreCurrentObjectMetadataItemIdComponentState,
@@ -68,6 +73,10 @@ export const RecordIndexPage = () => {
 
   if (workspaceSurface.type === 'side-panel') {
     return <RecordIndexContainerGater />;
+  }
+
+  if (isCentralNativeList(objectNamePlural, searchParams)) {
+    return <CentralNativeList objectMetadataItem={objectMetadataItem} />;
   }
 
   return (
