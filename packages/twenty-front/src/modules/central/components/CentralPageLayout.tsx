@@ -58,7 +58,16 @@ export const CentralPageLayout = ({
 }: CentralPageLayoutProps) => {
   const theme = useTheme();
   const { pathname } = useLocation();
-  const isInfra = pathname === CENTRAL_PATHS.infra;
+  const navItems = [
+    { to: CENTRAL_PATHS.clients, label: 'Clientes' },
+    { to: CENTRAL_PATHS.opportunities, label: 'Oportunidades' },
+    { to: CENTRAL_PATHS.infra, label: 'Infra e custos' },
+  ];
+  const activeTo =
+    navItems.find(
+      (item) =>
+        item.to !== CENTRAL_PATHS.clients && pathname.startsWith(item.to),
+    )?.to ?? CENTRAL_PATHS.clients;
 
   return (
     <>
@@ -70,18 +79,15 @@ export const CentralPageLayout = ({
             title="Central"
             actionButton={
               <StyledNav aria-label="Central">
-                <StyledNavLink
-                  to={CENTRAL_PATHS.clients}
-                  aria-current={isInfra ? undefined : 'page'}
-                >
-                  Clientes
-                </StyledNavLink>
-                <StyledNavLink
-                  to={CENTRAL_PATHS.infra}
-                  aria-current={isInfra ? 'page' : undefined}
-                >
-                  Infra e custos
-                </StyledNavLink>
+                {navItems.map((item) => (
+                  <StyledNavLink
+                    key={item.to}
+                    to={item.to}
+                    aria-current={item.to === activeTo ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </StyledNavLink>
+                ))}
               </StyledNav>
             }
           />
